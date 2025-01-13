@@ -1,6 +1,6 @@
 {
   "name": "multi-file-copy",
-  "displayName": "multi-file-copy",
+  "displayName": "Multi File Copy",
   "description": "复制多个文件内容到剪贴板",
   "version": "1.0.0",
   "publisher": "LaobaHambur",
@@ -9,17 +9,24 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/LaobaHambur/multi-file-copy"
+    "url": "https://github.com/LaobaHambur/multi-file-copy.git"
   },
+  "bugs": {
+    "url": "https://github.com/LaobaHambur/multi-file-copy/issues"
+  },
+  "homepage": "https://github.com/LaobaHambur/multi-file-copy#readme",
   "engines": {
-    "vscode": "^1.89.0"
+    "vscode": "^1.70.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "*"
+  "keywords": [
+    "copy",
+    "multi-file",
+    "clipboard"
   ],
+  "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -31,17 +38,16 @@
     "keybindings": [
       {
         "command": "multi-file-copy.copyFiles",
-        "key": "ctrl+o", 
-        "mac": "cmd+o",
-        "when": "explorerViewletVisible"
+        "key": "ctrl+o",
+        "mac": "cmd+o"
       }
     ],
     "menus": {
       "explorer/context": [
         {
           "command": "multi-file-copy.copyFiles",
-          "when": "explorerViewletVisible",
-          "group": "2_files"
+          "when": "explorerViewletVisible && filesExplorerFocus",
+          "group": "2_workspace"
         }
       ]
     }
@@ -58,17 +64,18 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.96.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
+    "@types/vscode": "^1.70.0",
     "@typescript-eslint/eslint-plugin": "^8.17.0",
     "@typescript-eslint/parser": "^8.17.0",
-    "eslint": "^9.16.0",
-    "typescript": "^5.7.2",
-    "ts-loader": "^9.5.1",
-    "webpack": "^5.95.0",
-    "webpack-cli": "^5.1.4",
     "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1"
-  }
+    "@vscode/test-electron": "^2.4.1",
+    "eslint": "^9.16.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.7.2",
+    "webpack": "^5.95.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "license": "MIT"
 }
