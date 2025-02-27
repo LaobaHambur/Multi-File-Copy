@@ -4,27 +4,11 @@
   "description": "复制多个文件内容到剪贴板",
   "version": "1.0.0",
   "publisher": "LaobaHambur",
-  "author": {
-    "name": "LaobaHambur"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/LaobaHambur/multi-file-copy.git"
-  },
-  "bugs": {
-    "url": "https://github.com/LaobaHambur/multi-file-copy/issues"
-  },
-  "homepage": "https://github.com/LaobaHambur/multi-file-copy#readme",
   "engines": {
     "vscode": "^1.70.0"
   },
   "categories": [
     "Other"
-  ],
-  "keywords": [
-    "copy",
-    "multi-file",
-    "clipboard"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
@@ -39,15 +23,16 @@
       {
         "command": "multi-file-copy.copyFiles",
         "key": "ctrl+o",
-        "mac": "cmd+o"
+        "mac": "cmd+o",
+        "when": "explorerViewletFocus || editorFocus"
       }
     ],
     "menus": {
       "explorer/context": [
         {
           "command": "multi-file-copy.copyFiles",
-          "when": "explorerViewletVisible && filesExplorerFocus",
-          "group": "2_workspace"
+          "when": "explorerViewletFocus",
+          "group": "navigation@1"
         }
       ]
     }

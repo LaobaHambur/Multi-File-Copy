@@ -48,24 +48,40 @@ exports.deactivate = deactivate;
 const vscode = __importStar(__webpack_require__(1));
 function activate(context) {
     console.log('多文件复制扩展已激活');
-    let disposable = vscode.commands.registerCommand('multi-file-copy.copyFiles', async (contextUri, uris) => {
+    let disposable = vscode.commands.registerCommand('multi-file-copy.copyFiles', async (...args) => {
         try {
             // 获取选中的文件
             let filesToCopy = [];
-            // 如果是从资源管理器中选择的多个文件
-            if (Array.isArray(uris) && uris.length > 0) {
-                filesToCopy = uris;
-                console.log('从资源管理器获取到多个文件:', uris.length);
+            // 处理命令参数
+            if (args.length > 0) {
+                // 如果第二个参数是数组，说明是多选
+                if (Array.isArray(args[1])) {
+                    filesToCopy = args[1];
+                    console.log('从资源管理器获取到多个文件:', filesToCopy.length);
+                }
+                // 如果第一个参数是 Uri，说明是单选
+                else if (args[0] instanceof vscode.Uri) {
+                    filesToCopy = [args[0]];
+                    console.log('获取到右键点击的文件:', args[0].fsPath);
+                }
             }
-            // 如果是右键单击的单个文件
-            else if (contextUri) {
-                filesToCopy = [contextUri];
-                console.log('获取到右键点击的文件:', contextUri.fsPath);
-            }
-            // 如果是从编辑器中触发
-            else if (vscode.window.activeTextEditor) {
+            // 如果通过参数没有获取到文件，尝试从编辑器获取
+            if (filesToCopy.length === 0 && vscode.window.activeTextEditor) {
                 filesToCopy = [vscode.window.activeTextEditor.document.uri];
                 console.log('从编辑器获取文件:', vscode.window.activeTextEditor.document.uri.fsPath);
+            }
+            // 如果没有获取到任何文件，尝试从资源管理器选择中获取
+            if (filesToCopy.length === 0) {
+                const selections = await vscode.window.showOpenDialog({
+                    canSelectMany: true,
+                    canSelectFolders: false,
+                    canSelectFiles: true,
+                    openLabel: '选择文件'
+                });
+                if (selections && selections.length > 0) {
+                    filesToCopy = selections;
+                    console.log('从对话框获取到文件:', selections.length);
+                }
             }
             if (filesToCopy.length === 0) {
                 vscode.window.showInformationMessage('请选择要复制的文件');
@@ -76,9 +92,8 @@ function activate(context) {
             let successCount = 0;
             for (const fileUri of filesToCopy) {
                 try {
-                    const fileData = await vscode.workspace.fs.readFile(fileUri);
-                    const fileContent = new TextDecoder().decode(fileData);
-                    allContent += `// ${fileUri.fsPath}\n${fileContent}\n\n`;
+                    const document = await vscode.workspace.openTextDocument(fileUri);
+                    allContent += `// ${fileUri.fsPath}\n${document.getText()}\n\n`;
                     successCount++;
                     console.log('成功读取文件:', fileUri.fsPath);
                 }
