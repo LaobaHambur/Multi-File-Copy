@@ -8,3 +8,7 @@ node_modules/yargs/node_modules/emoji-regex/es2015/index.js
 /node_modules
 /node_modules
 /node_modules
+/.vscode-test
+/dist
+dist/extension.js.map
+multi-file-copy-1.0.0.vsix

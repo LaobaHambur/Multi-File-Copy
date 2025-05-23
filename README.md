@@ -50,8 +50,8 @@
 
 如果您在使用过程中遇到任何问题或有任何建议，欢迎：
 
-1. 在 [GitHub Issues](https://github.com/LaobaHambur/multi-file-copy/issues) 提交问题
-2. 通过[邮箱](17698282656@163.com)联系我
+1. 在 [GitHub Issues](https://github.com/LaobaHambur/Multi-File-Copy/issues) 提交问题
+2. 通过邮箱联系我：[17698282656@163.com](mailto:17698282656@163.com)
 
 ## 📝 更新日志
 
