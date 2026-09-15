@@ -74,6 +74,7 @@ export function activate(context: vscode.ExtensionContext) {
             let allContent = '';
             let successCount = 0;
             const errors: string[] = [];
+            const skippedFiles: string[] = [];
 
             // 对文件进行排序，确保输出顺序一致
             allFiles.sort((a, b) => a.fsPath.localeCompare(b.fsPath));
@@ -95,6 +96,7 @@ export function activate(context: vscode.ExtensionContext) {
                         successCount++;
                         console.log('成功读取文件:', fileUri.fsPath);
                     } else {
+                        skippedFiles.push(path.basename(fileUri.fsPath));
                         console.log('跳过非文本文件:', fileUri.fsPath);
                     }
                 } catch (err) {
@@ -110,6 +112,11 @@ export function activate(context: vscode.ExtensionContext) {
                 if (errors.length > 0) {
                     message += ` (${errors.length} 个文件失败)`;
                     console.error('失败的文件:', errors);
+                }
+                
+                if (skippedFiles.length > 0) {
+                    message += ` (跳过 ${skippedFiles.length} 个非文本文件)`;
+                    console.log('跳过的文件:', skippedFiles);
                 }
                 
                 vscode.window.showInformationMessage(message);
@@ -139,12 +146,8 @@ async function getAllFilesInDirectory(dirPath: string): Promise<string[]> {
             const fullPath = path.join(dirPath, entry.name);
             
             if (entry.isDirectory()) {
-                // 跳过常见的需要忽略的目录
-                const ignoreDirs = ['node_modules', '.git', 'dist', 'build', '.vscode', '.idea'];
-                if (!ignoreDirs.includes(entry.name)) {
-                    const subFiles = await getAllFilesInDirectory(fullPath);
-                    files.push(...subFiles);
-                }
+                const subFiles = await getAllFilesInDirectory(fullPath);
+                files.push(...subFiles);
             } else if (entry.isFile()) {
                 files.push(fullPath);
             }
@@ -161,45 +164,165 @@ async function getAllFilesInDirectory(dirPath: string): Promise<string[]> {
  */
 function isTextFile(filePath: string): boolean {
     const textExtensions = [
-        // 编程语言
-        '.js', '.ts', '.jsx', '.tsx', '.py', '.java', '.c', '.cpp', '.h', '.hpp',
-        '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala', '.r', '.m',
-        '.vue', '.dart', '.lua', '.perl', '.sh', '.bash', '.zsh', '.fish',
+        // 主流编程语言
+        '.js', '.ts', '.jsx', '.tsx', '.mjs', '.cjs',
+        '.py', '.pyw', '.py3', '.pyi',
+        '.java', '.kt', '.kts', '.scala',
+        '.c', '.cpp', '.cc', '.cxx', '.c++', '.h', '.hpp', '.hh', '.hxx', '.h++',
+        '.cs', '.vb', '.fs', '.fsx',
+        '.php', '.php3', '.php4', '.php5', '.phtml',
+        '.rb', '.rbx', '.rhtml', '.erb',
+        '.go', '.mod', '.sum',
+        '.rs', '.toml',
+        '.swift',
+        '.dart',
+        '.r', '.R', '.rmd', '.Rmd',
+        '.m', '.mm',
+        '.vue', '.svelte',
+        '.lua',
+        '.perl', '.pl', '.pm', '.t', '.pod',
+        '.sh', '.bash', '.zsh', '.fish', '.ksh', '.csh', '.tcsh',
+        '.ps1', '.psm1', '.psd1',
+        '.bat', '.cmd',
+        '.coffee', '.litcoffee',
         
-        // 标记语言和数据格式
-        '.html', '.htm', '.xml', '.json', '.yaml', '.yml', '.toml', '.ini',
-        '.csv', '.svg', '.md', '.markdown', '.rst', '.tex',
+        // 现代编程语言
+        '.elm', '.ex', '.exs', '.erl', '.hrl', '.clj', '.cljs', '.cljc',
+        '.jl', '.nim', '.cr', '.d', '.zig', '.v', '.odin',
+        '.hs', '.lhs', '.ml', '.mli', '.fs', '.fsi', '.fsx',
+        '.lisp', '.lsp', '.cl', '.scm', '.ss', '.rkt',
+        '.f', '.f90', '.f95', '.f03', '.f08', '.for', '.ftn',
+        '.pas', '.pp', '.inc',
+        '.asm', '.s', '.S', '.nasm',
+        '.prolog', '.pro', '.P','.csproj',
         
-        // 样式表
-        '.css', '.scss', '.sass', '.less', '.styl',
+        // Web 相关
+        '.html', '.htm', '.xhtml', '.shtml','.jsp',
+        '.xml', '.xsl', '.xslt', '.xsd', '.wsdl', '.soap',
+        '.xaml',
+        '.css', '.scss', '.sass', '.less', '.styl', '.stylus',
+        '.json', '.json5', '.jsonl', '.ndjson', '.geojson',
+        '.yaml', '.yml',
+        '.svg', '.svgz',
+        
+        // 模板引擎
+        '.hbs', '.handlebars', '.mustache', '.ejs', '.pug', '.jade',
+        '.twig', '.liquid', '.njk', '.nunjucks',
+        
+        // 数据格式
+        '.csv', '.tsv', '.psv',
+        '.ini', '.cfg', '.conf', '.config', '.properties',
+        '.env', '.env.local', '.env.development', '.env.production',
+        '.toml', '.lock',
+        '.rdf', '.ttl', '.owl', '.jsonld',
+        
+        // 文档格式
+        '.md', '.markdown', '.mdown', '.mkd', '.mkdn',
+        '.rst', '.rest', '.restx', '.rtx',
+        '.txt', '.text', '.asc',
+        '.adoc', '.asciidoc',
+        '.org',
+        '.tex', '.latex', '.sty', '.cls', '.bib',
+        '.pod', '.podspec',
+        
+        // 数据库
+        '.sql', '.mysql', '.pgsql', '.sqlite', '.db',
+        '.cypher', '.cql',
+        
+        // API 相关
+        '.graphql', '.gql', '.graphqls',
+        '.proto', '.protobuf',
+        '.avro', '.avsc',
+        '.thrift',
+        '.raml', '.wadl',
+        '.openapi', '.swagger',
         
         // 配置文件
-        '.env', '.config', '.conf', '.cfg', '.properties', '.gitignore',
+        '.gitignore', '.gitattributes', '.gitmodules', '.gitkeep',
         '.dockerignore', '.editorconfig', '.eslintrc', '.prettierrc',
+        '.babelrc', '.browserslistrc', '.stylelintrc', '.jshintrc',
+        '.npmrc', '.yarnrc', '.nvmrc', '.noderc',
+        '.htaccess', '.htpasswd',
+        '.vimrc', '.zshrc', '.bashrc', '.profile',
+        '.gemrc', '.rubocop.yml', '.rspec', '.pryrc',
+        '.pylintrc', '.flake8', '.pycodestyle', '.isort.cfg',
+        '.editorconfig', '.clang-format', '.clang-tidy',
         
-        // 文本文件
-        '.txt', '.log', '.sql', '.graphql', '.gql',
+        // 日志文件
+        '.log', '.out', '.err', '.trace',
         
         // 其他
-        'Makefile', 'Dockerfile', 'Jenkinsfile', 'Vagrantfile'
+        '.license', '.licence', '.copyright',
+        '.changelog', '.changes', '.history',
+        '.todo', '.fixme', '.hack',
+        '.spec', '.feature', '.gherkin',
+        '.makefile', '.mk', '.cmake',
+        '.dockerfile', '.containerfile',
+        '.jenkinsfile', '.gitlab-ci.yml', '.travis.yml',
+        '.appveyor.yml', '.circleci', '.github'
     ];
     
     const ext = path.extname(filePath).toLowerCase();
     const basename = path.basename(filePath);
+    const basenameUpper = basename.toUpperCase();
     
     // 检查扩展名
     if (textExtensions.includes(ext)) {
         return true;
     }
     
-    // 检查特殊文件名
-    const specialFiles = ['Makefile', 'Dockerfile', 'Jenkinsfile', 'Vagrantfile', 'LICENSE', 'README'];
-    if (specialFiles.includes(basename) || specialFiles.some(f => basename.startsWith(f))) {
+    // 检查特殊文件名（不区分大小写）
+    const specialFiles = [
+        'Makefile', 'makefile', 'MAKEFILE',
+        'Dockerfile', 'dockerfile', 'DOCKERFILE',
+        'Containerfile', 'containerfile', 'CONTAINERFILE',
+        'Jenkinsfile', 'jenkinsfile', 'JENKINSFILE',
+        'Vagrantfile', 'vagrantfile', 'VAGRANTFILE',
+        'Rakefile', 'rakefile', 'RAKEFILE',
+        'Gemfile', 'gemfile', 'GEMFILE',
+        'Podfile', 'podfile', 'PODFILE',
+        'Pipfile', 'pipfile', 'PIPFILE',
+        'Brewfile', 'brewfile', 'BREWFILE',
+        'Procfile', 'procfile', 'PROCFILE',
+        'LICENSE', 'LICENCE', 'COPYING', 'COPYRIGHT',
+        'README', 'CHANGELOG', 'CHANGES', 'HISTORY',
+        'TODO', 'FIXME', 'HACK', 'AUTHORS', 'CONTRIBUTORS',
+        'INSTALL', 'NEWS', 'THANKS', 'VERSION',
+        'CODEOWNERS', 'FUNDING.yml', 'SECURITY.md',
+        'package.json', 'composer.json', 'setup.py', 'requirements.txt',
+        'pyproject.toml', 'poetry.lock', 'Cargo.toml', 'Cargo.lock',
+        'go.mod', 'go.sum', 'pubspec.yaml', 'pubspec.lock',
+        'CMakeLists.txt', 'configure.ac', 'configure.in',
+        'meson.build', 'BUILD', 'BUILD.bazel', 'WORKSPACE'
+    ];
+    
+    // 检查完整文件名
+    if (specialFiles.includes(basename) || specialFiles.includes(basenameUpper)) {
         return true;
     }
     
-    // 检查是否没有扩展名但是常见的文本文件
-    if (!ext && (basename.startsWith('.') || specialFiles.includes(basename))) {
+    // 检查文件名开头匹配
+    const prefixMatches = [
+        'README', 'LICENSE', 'LICENCE', 'CHANGELOG', 'CHANGES',
+        'TODO', 'FIXME', 'AUTHORS', 'CONTRIBUTORS', 'COPYING',
+        'INSTALL', 'NEWS', 'THANKS', 'VERSION', 'HISTORY'
+    ];
+    
+    if (prefixMatches.some(prefix => 
+        basenameUpper.startsWith(prefix.toUpperCase()) || 
+        basename.startsWith(prefix)
+    )) {
+        return true;
+    }
+    
+    // 检查是否没有扩展名但以点开头的配置文件
+    if (!ext && basename.startsWith('.')) {
+        return true;
+    }
+    
+    // 检查常见的无扩展名可执行脚本
+    const scriptFiles = ['configure', 'install', 'build', 'deploy', 'setup', 'test'];
+    if (!ext && scriptFiles.includes(basename.toLowerCase())) {
         return true;
     }
     
